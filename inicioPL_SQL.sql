@@ -267,5 +267,15 @@ EXEC desglose_cambio(883);
 --11. Codificar un procedimiento que permita borrar un empleado cuyo código se pasará en la llamada.
 
 --12. Escribir un procedimiento que modifique la localidad de un departamento. El procedimiento recibirá como parámetros el número del departamento y la localidad nueva.
+CREATE OR REPLACE PROCEDURE modificar_depart (
+	v_num_dept	depart.dept_no%TYPE,
+	v_loc		depart.loc%TYPE DEFAULT ‘PROVISIONAL’)
+IS
+BEGIN
+	UPDATE depart
+	SET depart.loc = v_loc
+	WHERE v_num_dept = depart.dept_no;
+END modificar_depart;
+/
 
 --13. Visualizar todos los procedimientos y funciones del usuario almacenados en la base de datos y su situación (valid o invalid).
