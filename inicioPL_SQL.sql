@@ -265,17 +265,50 @@ END;
 EXEC desglose_cambio(883);
 
 --11. Codificar un procedimiento que permita borrar un empleado cuyo código se pasará en la llamada.
+USANDO EL ROWID EN SQL, PERMITE VER LA ID DE CADA FILA DE LO SELECCIONADO:
+
+'DATOS A FUTURO:
+ALTER TABLE EMPLE ADD EMP_ROWID VARCHAR2(18);
+UPDATE EMPLE SET EMP_ROWID = ROWID;'
+
+CREATE OR REPLACE PROCEDURE borrar_empleado(v_rowid ROWID)
+IS
+BEGIN
+  DELETE FROM EMPLE
+  WHERE ROWID = v_rowid;
+  DBMS_OUTPUT.PUT_LINE('El empleado ha sido eliminado correctamente.');
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('No se ha encontrado ningún empleado con el ROWID especificado.');
+  WHEN OTHERS THEN
+    DBMS_OUTPUT.PUT_LINE('Ha ocurrido un error al eliminar el empleado: ' || SQLERRM);
+    ROLLBACK;
+END borrar_empleado;
+/
+
+COMMIT;
+
+EXEC borrar_empleado('USAR (SELECT ROWID, APELLIDO FROM EMPLE;) PARA ELEGIR UNO');
+--EJEMPLO ELIMINADO: EXEC borrar_empleado('AAADhuAAEAAAAGvAAC');
+
+ROLLBACK;
 
 --12. Escribir un procedimiento que modifique la localidad de un departamento. El procedimiento recibirá como parámetros el número del departamento y la localidad nueva.
 CREATE OR REPLACE PROCEDURE modificar_depart (
-	v_num_dept	depart.dept_no%TYPE,
-	v_loc		depart.loc%TYPE DEFAULT ‘PROVISIONAL’)
+  v_num_dept depart.dept_no%TYPE,
+  v_loc depart.loc%TYPE DEFAULT 'PROVISIONAL')
 IS
 BEGIN
-	UPDATE depart
-	SET depart.loc = v_loc
-	WHERE v_num_dept = depart.dept_no;
+  UPDATE depart
+  SET loc = v_loc
+  WHERE dept_no = v_num_dept;
 END modificar_depart;
 /
 
+EXEC modificar_depart(10, 'CUENCA');
+
 --13. Visualizar todos los procedimientos y funciones del usuario almacenados en la base de datos y su situación (valid o invalid).
+BUSCAR EN EL DICCIONARIO DE DATOS:
+
+DECRIBE USER_OBJECTS
+DECRIBE ALL_OBJECTS
