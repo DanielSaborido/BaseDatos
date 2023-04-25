@@ -43,6 +43,32 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE PROCEDURE hoteles_loop (NumHabitaciones Hotel.Nhabs%TYPE DEFAULT 50) 
+AS
+	UnHotel Hotel%ROWTYPE;
+	CURSOR HotelesGrandes IS
+		SELECT * FROM Hotel WHERE Nhabs > NumHabitaciones;
+BEGIN
+	OPEN HotelesGrandes;
+	-- Bucle para procesar todos los Hoteles Grandes:
+	LOOP
+		FETCH HotelesGrandes INTO UnHotel;
+		EXIT WHEN HotelesGrandes%NOTFOUND;
+		-- Procesamiento del hotel almacenado en UnHotel:
+		IF UnHotel.TienePiscina = 'S' THEN
+			UPDATE Hotel SET PrecioHab = PrecioHab + 10 WHERE HotelID = UnHotel.HotelID;
+		ELSE
+			UPDATE Hotel SET PrecioHab = PrecioHab + 5 WHERE HotelID = UnHotel.HotelID;
+		END IF;
+	END LOOP;
+	DBMS_OUTPUT.PUT_LINE('Hoteles Procesados: ' || HotelesGrandes%ROWCOUNT);
+	CLOSE HotelesGrandes;
+	COMMIT;
+END hoteles_loop;
+/
+
+EXEC hoteles_loop(50)
+
 -----------------------------------
 -- Con bucle WHILE
 -----------------------------------
@@ -74,6 +100,35 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE PROCEDURE hoteles_while (NumHabitaciones Hotel.Nhabs%TYPE DEFAULT 50) 
+AS
+	UnHotel Hotel%ROWTYPE;
+	CURSOR HotelesGrandes IS
+		SELECT * FROM Hotel WHERE Nhabs > NumHabitaciones;
+BEGIN
+	OPEN HotelesGrandes;
+	-- Bucle para procesar todos los Hoteles Grandes:
+	FETCH HotelesGrandes INTO UnHotel;
+	WHILE HotelesGrandes%FOUND LOOP
+		-- Procesamiento del hotel almacenado en UnHotel:
+		IF UnHotel.TienePiscina = 'S' THEN
+			UPDATE Hotel SET PrecioHab=PrecioHab + 10
+			WHERE HotelID=UnHotel.HotelID;
+		ELSE
+			UPDATE Hotel SET PrecioHab=PrecioHab + 5
+			WHERE HotelID=UnHotel.HotelID;
+		END IF;
+		FETCH HotelesGrandes INTO UnHotel;
+	END LOOP;
+	DBMS_OUTPUT.PUT_LINE('Hoteles Procesados: '
+	|| HotelesGrandes%ROWCOUNT);
+	CLOSE HotelesGrandes;
+	COMMIT;
+END hoteles_while;
+/
+
+EXEC hoteles_while(50)
+
 -----------------------------------
 -- Con bucle FOR de cursor
 -----------------------------------
@@ -104,3 +159,28 @@ BEGIN
 	COMMIT;
 END;
 /
+
+CREATE OR REPLACE PROCEDURE hoteles_for (NumHabitaciones Hotel.Nhabs%TYPE DEFAULT 50) 
+AS
+	UnHotel Hotel%ROWTYPE;
+	CURSOR HotelesGrandes IS
+		SELECT * FROM Hotel WHERE Nhabs > NumHabitaciones;
+	Cont 	number := 0;
+BEGIN
+	-- Bucle para procesar todos los Hoteles Grandes:
+	FOR UnHotel IN HotelesGrandes LOOP
+		IF UnHotel.TienePiscina = 'S' THEN
+			UPDATE Hotel SET PrecioHab=PrecioHab + 10
+			WHERE HotelID=UnHotel.HotelID;
+		ELSE
+			UPDATE Hotel SET PrecioHab=PrecioHab + 5
+			WHERE HotelID=UnHotel.HotelID;
+		END IF;
+		Cont := Cont + 1;
+	END LOOP;
+	DBMS_OUTPUT.PUT_LINE('Hoteles Procesados: ' || Cont);
+	COMMIT;
+END hoteles_for;
+/
+
+EXEC hoteles_for(50)

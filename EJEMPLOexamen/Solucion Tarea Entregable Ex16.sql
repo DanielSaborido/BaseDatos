@@ -49,7 +49,9 @@ PROCESO DE DATOS               RAQUEL          RUIZ FERNANDEZ
 SQL>
 SELECT Nombre_em, Apellidos_em
 	FROM EMPLEADOS
-	WHERE SALARIO_EM >= (SELECT MAX(SALARIO_EM) FROM EMPLEADOS WHERE Dpto_em = 122)
+	WHERE SALARIO_EM >= (SELECT MAX(SALARIO_EM) 
+							FROM EMPLEADOS 
+							WHERE Dpto_em = 122)
 	ORDER BY 2, 1;
 	
 RESULTADO:
@@ -83,7 +85,9 @@ SERGIO          TORO RAMIREZ
 SQL>
 SELECT Nombre_em, Apellidos_em, Salario_em
 	FROM EMPLEADOS E
-	WHERE Salario_em = (SELECT MAX(Salario_em) FROM Empleados WHERE Dpto_em = E.Dpto_em);
+	WHERE Salario_em = (SELECT MAX(Salario_em) 
+							FROM Empleados 
+							WHERE Dpto_em = E.Dpto_em);
 	
 RESULTADO:
 NOMBRE_EM       APELLIDOS_EM                   SALARIO_EM
