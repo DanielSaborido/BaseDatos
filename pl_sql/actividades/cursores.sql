@@ -6,6 +6,21 @@ SHOW ERROR
 
 --1. Desarrollar un procedimiento que visualice el apellido y la fecha de alta de todos los empleados ordenados por apellido.
 
+DECLARE
+	CURSOR LISTADO_EMPLE IS
+		SELECT APELLIDO, FECHA_ALT FROM EMPLE ORDER BY APELLIDO;
+		apellido EMPLE.APELLIDO%TYPE;
+		fecha EMPLE.FECHA_ALT%TYPE;
+BEGIN
+	OPEN LISTADO_EMPLE;
+	LOOP
+		FETCH LISTADO_EMPLE INTO apellido, fecha;
+		EXIT WHEN LISTADO_EMPLE%NOTFOUND;
+		DBMS_OUTPUT.PUT_LINE(TO_CHAR(LISTADO_EMPLE%ROWCOUNT,'99.') || ' ' || apellido || ' ' || fecha);
+	END LOOP;
+	CLOSE LISTADO_EMPLE;
+END;
+/
 
 --2. Codificar un procedimiento que muestre el nombre de cada departamento y el número de empleados que tiene.
 
