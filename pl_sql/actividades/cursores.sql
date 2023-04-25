@@ -24,7 +24,49 @@ END;
 
 --2. Codificar un procedimiento que muestre el nombre de cada departamento y el número de empleados que tiene.
 
+DECLARE
+	CURSOR CONTEO_EMPLE IS
+		SELECT * FROM DEPART;
+BEGIN
+	OPEN CONTEO_EMPLE;
+	LOOP
+		FETCH CONTEO_EMPLE INTO apellido, fecha;
+		EXIT WHEN CONTEO_EMPLE%NOTFOUND;
+		DBMS_OUTPUT.PUT_LINE(TO_CHAR(CONTEO_EMPLE%ROWCOUNT,'99.') || ' ' || apellido || ' ' || fecha);
+	END LOOP;
+	CLOSE CONTEO_EMPLE;
+END;
+/
 
+CREATE OR REPLACE PROCEDURE LISTADO
+IS
+	CURSOR DEPARTAMENTOS IS	
+		SELECT *
+		FROM DEPART;
+	CURSOR EMPLEADOS (cod DEPART.DEPT_NO%TYPE) IS
+		SELECT COD_DE, NOMBRE_DE, PRESUPUESTO_DE, NOMBRE_EM
+		FROM DEPART, EMPLE
+		WHERE DIRECTOR_DE = COD_EM
+			AND Centro_de = cod;
+	CURSOR c_empleados(cod DEPARTAMENTOS.COD_DE%TYPE) IS
+		SELECT COD_EM, NOMBRE_EM, APELLIDOS_EM, Numhijos_em, SALARIO_EM
+		FROM EMPLEADOS
+		WHERE DPTO_EM = cod;
+BEGIN
+	FOR r1 IN DEPARTAMENTOS LOOP
+		DBMS_OUTPUT.PUT_LINE('Departamento: '||r1.DNOMBRE);
+		FOR r2 IN EMPLEADOS(r1.COD_CE) LOOP
+			DBMS_OUTPUT.PUT_LINE('.   Departamento: '||r2.Cod_de||': '||r2.Nombre_de||' ('||r2.Presupuesto_de||') Director: '||r2.Nombre_em);
+			FOR r3 IN c_empleados(r2.COD_de) LOOP
+				DBMS_OUTPUT.PUT_LINE('.        '||r3.Cod_em||' '||r3.Nombre_em||' '||r3.Apellidos_em||' '||r3.Numhijos_em||' '||r3.Salario_em);
+			END LOOP;
+		END LOOP;
+	END LOOP;
+
+--EXCEPTION
+
+END LISTADO;
+/
 --3. Escribir un procedimiento que reciba una cadena y visualice el apellido y el número de empleado de todos los empleados cuyo apellido contenga la cadena especificada. Al finalizar visualizar el número de empleados mostrados.
 
 
