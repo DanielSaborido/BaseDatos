@@ -40,7 +40,7 @@ BEGIN
 	LOOP
 		FETCH C_CONT_EMPLE INTO departamento, apellido;
 		EXIT WHEN C_CONT_EMPLE%NOTFOUND;
-		DBMS_OUTPUT.PUT_LINE('En el departamento de ' || departamento || ' trabajan ' || apellido || ' personas.');
+		DBMS_OUTPUT.PUT_LINE('En el departamento de ' || departamento || ' trabajan ' || apellido || ' trabajadores.');
 	END LOOP;
 	CLOSE C_CONT_EMPLE;
 END PR_CONT_EMPLE;
