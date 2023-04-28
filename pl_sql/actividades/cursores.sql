@@ -89,7 +89,7 @@ BEGIN
 	OPEN C_SALARIO;
 	LOOP
 		FETCH C_SALARIO INTO apellido, salario;
-		EXIT WHEN C_SALARIO%ROWCOUNT=6 OR C_SALARIO%NOTFOUND;
+		EXIT WHEN C_SALARIO%ROWCOUNT = 6 OR C_SALARIO%NOTFOUND;
 		DBMS_OUTPUT.PUT_LINE('El empleado ' || apellido || ' recibe un salario de ' || salario);
 	END LOOP;
 	CLOSE C_SALARIO;
@@ -101,11 +101,80 @@ EXEC PR_SALARIO_EMPLE;
 --5. Codificar un programa que visualice los dos empleados que ganan menos de cada oficio.
 SET SERVEROUTPUT ON
 
+CREATE OR REPLACE PROCEDURE PR_SALARIO_EMPLE_OFICIO
+IS
+    CURSOR C_SALARIO_OFICIO IS
+        SELECT OFICIO, APELLIDO, SALARIO
+        FROM EMPLE
+        ORDER BY OFICIO, SALARIO ASC;
+    oficio EMPLE.OFICIO%TYPE;
+    apellido EMPLE.APELLIDO%TYPE;
+    salario EMPLE.SALARIO%TYPE;     
+    empleados_por_oficio NUMBER := 0;
+    oficio_anterior EMPLE.OFICIO%TYPE;
+BEGIN
+    OPEN C_SALARIO_OFICIO;
+    LOOP
+        FETCH C_SALARIO_OFICIO INTO oficio, apellido, salario;
+        EXIT WHEN C_SALARIO_OFICIO%NOTFOUND;
+        IF empleados_por_oficio < 2 OR oficio != oficio_anterior THEN
+            DBMS_OUTPUT.PUT_LINE('El empleado ' || apellido || ' del oficio ' || oficio || ' recibe un salario de ' || salario);
+		ELSE
+			empleados_por_oficio := 0;
+        END IF;
+		empleados_por_oficio := empleados_por_oficio + 1;
+        oficio_anterior := oficio;
+    END LOOP;
+    CLOSE C_SALARIO_OFICIO;
+END PR_SALARIO_EMPLE_OFICIO;
+/
+
+EXEC PR_SALARIO_EMPLE_OFICIO;
+
 --6. Escribir un programa que muestre los siguientes datos:
 SET SERVEROUTPUT ON
     --A. Para cada empleado: apellido y salario.
     --B. Para cada departamento: Número de empleados y suma de los salarios del departamento.
     --C. Al final del listado: Número total de empleados y suma de todos los salarios.
+CREATE OR REPLACE PROCEDURE PR_MOSTRAR_INFORMACION
+IS
+    CURSOR C_SALARIO IS
+		SELECT APELLIDO, SALARIO
+		FROM EMPLE
+		ORDER BY SALARIO DESC;
+	CURSOR C_CONT_EMPLE IS
+		SELECT DNOMBRE, COUNT(APELLIDO), SUM(SALARIO)
+		FROM DEPART D, EMPLE E
+		WHERE D.DEPT_NO = E.DEPT_NO
+		GROUP BY DNOMBRE;
+	departamento DEPART.DNOMBRE%TYPE;
+	apellido EMPLE.APELLIDO%TYPE;
+	salario EMPLE.SALARIO%TYPE;
+    emple_total NUMBER := 0;
+    salario_total NUMBER := 0;
+BEGIN
+    OPEN C_SALARIO;
+	LOOP
+		FETCH C_SALARIO INTO apellido, salario;
+		EXIT WHEN C_SALARIO%NOTFOUND;
+		DBMS_OUTPUT.PUT_LINE('Empleado: ' || apellido || ' |Salario: ' || salario);
+	END LOOP;
+	CLOSE C_SALARIO;
+	OPEN C_CONT_EMPLE;
+	LOOP
+		FETCH C_CONT_EMPLE INTO departamento, apellido, salario;
+		EXIT WHEN C_CONT_EMPLE%NOTFOUND;
+		DBMS_OUTPUT.PUT_LINE('Departamento: ' || departamento || ' Cantidad trabajadores: ' || apellido || ' Suma de sus salarios: ' || salario);
+		emple_total := emple_total + apellido;
+		salario_total := salario_total + salario;
+	END LOOP;
+	DBMS_OUTPUT.PUT_LINE('Total de empleados: ' || emple_total || ' Total salario: ' || salario_total);
+	CLOSE C_CONT_EMPLE;
+END PR_MOSTRAR_INFORMACION;
+/
+
+EXEC PR_MOSTRAR_INFORMACION;
+
 --7. Desarrollar un procedimiento que permita insertar nuevos departamentos según las siguientes especificaciones:
 SET SERVEROUTPUT ON
     --A. Se pasará al procedimiento el nombre del departamento y la localidad.
