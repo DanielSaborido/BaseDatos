@@ -210,37 +210,39 @@ SET SERVEROUTPUT ON
     --A. No existe el departamento.
     --B. No existe el empleado jefe.
 	--C. Si ya existía el empleado.
-CREATE OR REPLACE PROCEDURE alta_emp(num EMPLE.EMP_NO%TYPE, ape EMPLE.APELLIDO%TYPE, ofi EMPLE.OFICIO%TYPE, jef EMPLE.DIR%TYPE, fec EMPLE.FECHA_ALT%TYPE, sal EMPLE.SALARIO%TYPE, com EMPLE.COMISION%TYPE DEFAULT NULL, dep EMPLE.DEPT_NO%TYPE)
+CREATE OR REPLACE PROCEDURE PR_ALTA_EMPLE(num_emple EMPLE.EMP_NO%TYPE, apellidos EMPLE.APELLIDO%TYPE, oficio EMPLE.OFICIO%TYPE, jefe_depart EMPLE.DIR%TYPE, fecha_alt EMPLE.FECHA_ALT%TYPE, salario EMPLE.SALARIO%TYPE, comision EMPLE.COMISION%TYPE DEFAULT NULL, departamento EMPLE.DEPT_NO%TYPE)
 AS
-	dummy_jef EMPLE.DIR%TYPE DEFAULT NULL;
-	dummy_dep DEPART.DEPT_NO%TYPE DEFAULT NULL;
+	comprobacion_jefe EMPLE.DIR%TYPE DEFAULT NULL;
+	comprobacion_depart DEPART.DEPT_NO%TYPE DEFAULT NULL;
 BEGIN
-	/* Comprobación de que existe el departamento */
-	SELECT dept_no INTO dummy_dep
-	FROM depart WHERE dept_no = dep;
-	/* Comprobación de que existe el jefe del empleado */ 
-	SELECT emp_no INTO dummy_jef 
-	FROM emple WHERE emp_no = jef;
-	/* Inserción de la fila */
-	INSERT INTO EMPLE VALUES
-	(num, ape, ofi, jef, fec, sal, com, dep);
+	COMMIT;
+	SELECT DEPT_NO INTO comprobacion_depart
+	FROM DEPART WHERE DEPT_NO = departamento;
+	
+	SELECT EMP_NO INTO comprobacion_jefe 
+	FROM EMPLE WHERE EMP_NO = jefe_depart;
+	
+	INSERT INTO EMPLE VALUES (num_emple, apellidos, oficio, jefe_depart, fecha_alt, salario, comision, departamento);
+	COMMIT;
 EXCEPTION 
 	WHEN NO_DATA_FOUND THEN
-	IF dummy_dep IS NULL THEN
-	RAISE_APPLICATION_ERROR(-20005,
-	'Err. Departamento inexistente');
-	ELSIF dummy_jef IS NULL THEN
-	RAISE_APPLICATION_ERROR(-20005,
-	'Err. No existe el jefe');
-	ELSE
-	RAISE_APPLICATION_ERROR(-20005,
-	'Err. Datos no encontrados(*)');
-	END IF;
+		IF comprobacion_depart IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20005, '[ERROR] Departamento inexistente.');
+		ELSIF comprobacion_jefe IS NULL THEN
+		RAISE_APPLICATION_ERROR(-20005,	'[ERROR] No existe el jefe.');
+		ELSE
+		RAISE_APPLICATION_ERROR(-20005,	'[ERROR] Datos no encontrados.');
+		END IF;
 	WHEN DUP_VAL_ON_INDEX THEN
-	DBMS_OUTPUT.PUT_LINE
-	('Err.numero de empleado duplicado');
-	RAISE;
-END alta_emp;
+		DBMS_OUTPUT.PUT_LINE('[ERROR] Numero de empleado duplicado.');
+	WHEN OTHERS THEN 
+		DBMS_OUTPUT.PUT_LINE('[ERROR] Surgio un error inesperado.');
+	ROLLBACK;
+END PR_ALTA_EMPLE;
+/
+
+EXEC PR_ALTA_EMPLE(9999, 'lucia','profesora',7698,'20/02/1980', 208000,39000,30);
+
 --9. Codificar un procedimiento reciba como parámetros un numero de departamento, un importe y un porcentaje; y suba el salario a todos los empleados del departamento indicado en la llamada. La subida será el porcentaje o el importe indicado en la llamada (el que sea más beneficioso para el empleado en cada caso empleado).
 SET SERVEROUTPUT ON
 
