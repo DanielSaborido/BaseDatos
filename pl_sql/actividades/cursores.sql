@@ -243,8 +243,36 @@ END PR_ALTA_EMPLE;
 
 EXEC PR_ALTA_EMPLE(9999, 'lucia','profesora',7698,'20/02/1980', 208000,39000,30);
 
---9. Codificar un procedimiento reciba como parámetros un numero de departamento, un importe y un porcentaje; y suba el salario a todos los empleados del departamento indicado en la llamada. La subida será el porcentaje o el importe indicado en la llamada (el que sea más beneficioso para el empleado en cada caso empleado).
+--9. Codificar un procedimiento reciba como parámetros un numero de departamento, un importe y un porcentaje; 
+--y suba el salario a todos los empleados del departamento indicado en la llamada. La subida será el porcentaje o el importe indicado en la llamada (el que sea más beneficioso para el empleado en cada caso empleado).
 SET SERVEROUTPUT ON
+CREATE OR REPLACE PROCEDURE PR_SUBIDA_SALARIO(num_depar EMPLE.DEPT_NO%TYPE, importe NUMBER, porcentaje NUMBER)
+AS
+	CURSOR C_SAL IS SELECT SALARIO,ROWID
+	FROM EMPLE WHERE DEPT_NO = num_depar;
+	v_salario C_SAL%ROWTYPE;
+	import_pct NUMBER(10);
+BEGIN
+	OPEN C_SAL;
+	FETCH C_SAL INTO v_salario;
+	WHILE C_SAL%FOUND LOOP
+		import_pct := GREATEST(v_salario.SALARIO*(porcentaje/100), importe);
+		UPDATE EMPLE SET SALARIO=SALARIO + import_pct
+		WHERE ROWID = v_salario.rowid;
+		FETCH C_SAL INTO v_salario; 
+	END LOOP; 
+	CLOSE C_SAL; 
+EXCEPTION 
+	WHEN NO_DATA_FOUND THEN 
+		DBMS_OUTPUT.PUT_LINE('[ERROR] Ninguna fila actualizada.');
+	WHEN OTHERS THEN 
+		DBMS_OUTPUT.PUT_LINE('[ERROR] Surgio un error inesperado.');
+	ROLLBACK;
+END PR_SUBIDA_SALARIO;
+/
+
+EXEC PR_SUBIDA_SALARIO(20, 390, 30);
+
 
 --10. Escribir un procedimiento que suba el sueldo de todos los empleados que ganen menos que el salario medio de su oficio. La subida será de el 50% de la diferencia entre el salario del empleado y la media de su oficio. Se deberá asegurar que la transacción no se quede a medias, y se gestionarán los posibles errores.
 SET SERVEROUTPUT ON
