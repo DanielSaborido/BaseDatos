@@ -10,8 +10,9 @@ SET SERVEROUTPUT ON
 DECLARE
 	CURSOR LISTADO_EMPLE IS
 		SELECT APELLIDO, FECHA_ALT FROM EMPLE ORDER BY APELLIDO;
-		apellido EMPLE.APELLIDO%TYPE;
-		fecha EMPLE.FECHA_ALT%TYPE;
+		
+	apellido EMPLE.APELLIDO%TYPE;
+	fecha EMPLE.FECHA_ALT%TYPE;
 BEGIN
 	OPEN LISTADO_EMPLE;
 	LOOP
@@ -33,8 +34,9 @@ IS
 		FROM DEPART D, EMPLE E
 		WHERE D.DEPT_NO = E.DEPT_NO(+)
 		GROUP BY DNOMBRE;
-		departamento DEPART.DNOMBRE%TYPE;
-		apellido EMPLE.APELLIDO%TYPE;
+		
+	departamento DEPART.DNOMBRE%TYPE;
+	apellido EMPLE.APELLIDO%TYPE;
 BEGIN
 	OPEN C_CONT_EMPLE;
 	LOOP
@@ -58,8 +60,9 @@ IS
 		SELECT APELLIDO, EMP_NO
 		FROM EMPLE
 		WHERE UPPER(APELLIDO) LIKE UPPER('%'||cadena||'%');
-		apellido EMPLE.APELLIDO%TYPE;
-		numero EMPLE.EMP_NO%TYPE;
+		
+	apellido EMPLE.APELLIDO%TYPE;
+	numero EMPLE.EMP_NO%TYPE;
 BEGIN
 	OPEN C_VISTA_APELL;
 	LOOP
@@ -83,8 +86,9 @@ IS
 		SELECT APELLIDO, SALARIO
 		FROM EMPLE
 		ORDER BY SALARIO DESC;
-		apellido EMPLE.APELLIDO%TYPE;
-		salario EMPLE.SALARIO%TYPE;
+		
+	apellido EMPLE.APELLIDO%TYPE;
+	salario EMPLE.SALARIO%TYPE;
 BEGIN
 	OPEN C_SALARIO;
 	LOOP
@@ -107,6 +111,7 @@ IS
         SELECT OFICIO, APELLIDO, SALARIO
         FROM EMPLE
         ORDER BY OFICIO, SALARIO ASC;
+		
     oficio EMPLE.OFICIO%TYPE;
     apellido EMPLE.APELLIDO%TYPE;
     salario EMPLE.SALARIO%TYPE;     
@@ -147,6 +152,7 @@ IS
 		FROM DEPART D, EMPLE E
 		WHERE D.DEPT_NO = E.DEPT_NO
 		GROUP BY DNOMBRE;
+		
 	departamento DEPART.DNOMBRE%TYPE;
 	apellido EMPLE.APELLIDO%TYPE;
 	salario EMPLE.SALARIO%TYPE;
@@ -185,6 +191,7 @@ AS
 	CURSOR C_DEP IS 
 		SELECT DNOMBRE
 		FROM DEPART WHERE DNOMBRE = nombre_dep;
+		
 	comprobacion DEPART.DNOMBRE%TYPE DEFAULT NULL;
 	ultimo_num DEPART.DEPT_NO%TYPE;
 	nombre_duplicado EXCEPTION;
@@ -249,7 +256,8 @@ SET SERVEROUTPUT ON
 CREATE OR REPLACE PROCEDURE PR_SUBIDA_SALARIO(num_depar EMPLE.DEPT_NO%TYPE, importe NUMBER, porcentaje NUMBER)
 AS
 	CURSOR C_SAL IS SELECT SALARIO,ROWID
-	FROM EMPLE WHERE DEPT_NO = num_depar;
+		FROM EMPLE WHERE DEPT_NO = num_depar;
+	
 	v_salario C_SAL%ROWTYPE;
 	import_pct NUMBER(10);
 BEGIN
@@ -274,5 +282,48 @@ END PR_SUBIDA_SALARIO;
 EXEC PR_SUBIDA_SALARIO(20, 390, 30);
 
 
---10. Escribir un procedimiento que suba el sueldo de todos los empleados que ganen menos que el salario medio de su oficio. La subida será de el 50% de la diferencia entre el salario del empleado y la media de su oficio. Se deberá asegurar que la transacción no se quede a medias, y se gestionarán los posibles errores.
+--10. Escribir un procedimiento que suba el sueldo de todos los empleados que ganen menos que el salario medio de su oficio.
+--La subida será de el 50% de la diferencia entre el salario del empleado y la media de su oficio.
+--Se deberá asegurar que la transacción no se quede a medias, y se gestionarán los posibles errores.
 SET SERVEROUTPUT ON
+
+CREATE OR REPLACE PROCEDURE subida_50pct 
+AS
+	CURSOR c_ofi_sal IS
+		SELECT oficio, AVG(salario) salario FROM emple
+		GROUP BY oficio;
+	
+	CURSOR c_emp_sal IS
+		SELECT oficio, salario FROM emple E1
+		WHERE salario <
+		(SELECT AVG(salario) FROM emple E2
+		WHERE E2.oficio = E1.oficio)
+		ORDER BY oficio, salario FOR UPDATE OF salario;
+	
+	vr_ofi_sal c_ofi_sal%ROWTYPE; 
+	vr_emp_sal c_emp_sal%ROWTYPE; 
+	v_incremento emple.salario%TYPE; 
+BEGIN
+	COMMIT;
+	OPEN c_emp_sal;
+	FETCH c_emp_sal INTO vr_emp_sal;
+	OPEN c_ofi_sal;
+	FETCH c_ofi_sal INTO vr_ofi_sal;
+	WHILE c_ofi_sal%FOUND AND c_emp_sal%FOUND LOOP
+		v_incremento := (vr_ofi_sal.salario - vr_emp_sal.salario) / 2;
+		UPDATE emple SET salario = salario + v_incremento
+		WHERE CURRENT OF c_emp_sal;
+		FETCH c_emp_sal INTO vr_emp_sal;
+		IF c_ofi_sal%FOUND and 
+			vr_ofi_sal.oficio <> vr_emp_sal.oficio THEN 
+			FETCH c_ofi_sal INTO vr_ofi_sal; 
+		END IF; 
+	END LOOP; 
+	CLOSE c_emp_sal; 
+	CLOSE c_ofi_sal; 
+	COMMIT; 
+EXCEPTION 
+	WHEN OTHERS THEN 
+		ROLLBACK WORK; 
+	RAISE; 
+END subida_50pct;
